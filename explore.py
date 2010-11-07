@@ -4,7 +4,7 @@ Created on 06/11/2010
 
 @author: peter
 """
-import os, csv
+import sys, os, csv
 
 hearst_dir = r'\downloads\hearst'
 model_dir = os.path.join(hearst_dir, 'Hearst_Challenge_Modeling_CSV_Files')
@@ -28,16 +28,106 @@ def sample(filename):
     
     print '======================================='
     return header
-    
+
+def round(x):
+    return int(x+0.5)
+
+def getAllValueCounts(filename, keys):
+    print 'getAllValueCounts', filename, keys
+    f = open(filename, 'rt')
+    header = csv.readCsvLine(f)
+    data = csv.readCsvGen(f)
+    print header
+
+    column_index = dict(zip(keys, [header.index(k) for k in keys]))
+    counts = dict(zip(keys, [{} for k in keys]))
+    print 'indexes', column_index
+    print ' counts', counts
+
+    num_lines = 0
+    for row in data:
+        num_lines += 1
+        for k in keys:
+            val = row[column_index[k]]
+            counts[k][val] = counts[k].get(val,0) + 1
+
+    print filename, num_lines, 'lines'
+    for k in keys:
+        val = counts[k]
+        print k, len(val), val
+        total = sum(val.values())
+        cumulative = 0.0
+        if True:
+            for v in sorted(val.keys(), key = lambda x: -val[x]):
+                percent = val[v]*100.0/total
+                cumulative += percent
+                print '%5s %8d %3d%% %3d%%' % (v, val[v], round(percent), round(cumulative))
+        print '%5s %8d %3d%% %3d%%' % ('total', total, round(sum([v*100.0/total for v in val.values()])), round(cumulative))
+    f.close()
+    return counts
+
+def getAllStats(filename, keys):
+    print 'getHiLo', filename, keys
+    f = open(filename, 'rt')
+    header = csv.readCsvLine(f)
+    data = csv.readCsvGen(f)
+    print header
+
+    column_index = dict(zip(keys, [header.index(k) for k in keys]))
+    stats = dict(zip(keys, [{'lo':sys.maxint, 'hi':-sys.maxint, 'mean': 0} for k in keys]))
+    print 'indexes', column_index
+    print ' stats', stats
+
+    num_rows = 0
+    for row in data:
+        num_rows += 1
+        for k in keys:
+            val = float(row[column_index[k]])
+            s = stats[k]
+            if stats[k]['lo'] < val:
+                stats[k]['lo'] = val
+            if stats[k]['hi'] > val:
+                stats[k]['hi'] = val
+            stats[k]['mean'] += val
+    for k in keys:
+        stats[k]['mean'] = stats[k]['mean']/num_rows 
+
+    print filename, num_rows, 'rows'
+    for k in keys:
+        print k, stats[k]
+    f.close()
+    return stats
+
+def getStats(filename):
+    f = open(filename, 'rt')
+    header = csv.readCsvLine(f)
+    lines = csv.readCsvGen(f)
+    num_rows = 0
+    for l in lines:
+        num_rows += 1
+    print filename, num_rows, 'lines'
+    f.close()
+
 if __name__ == '__main__':
     if False:
         h1 = sample(train_file_1)
         h2 = sample(train_file_2)
         h3 = sample(train_file_3)
     
+    
     if True:
         store_h = sample(store_mo)
-    sales_h = sample(sales_mo)
+    if True:
+        sales_h = sample(sales_mo)
+    if False:
+        getStats(store_mo)
+    if False:
+        getStats(sales_mo)
+    
+    getAllValueCounts(store_mo, ['STATE'])
+    getAllValueCounts(sales_mo, ['wholesaler_key'])
+    
+    getAllStats(sales_mo, ['dollar_volume', 'sales', 'returns'])
 
     
     if False:

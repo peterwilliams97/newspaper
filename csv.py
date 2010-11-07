@@ -36,6 +36,7 @@ def anyNotBlank(row):
 			return True
 	return False
 
+# Based on http://stackoverflow.com/questions/2212933/python-regex-for-reading-csv-like-rows
 csv_pattern = re.compile(r'''
    \s*?                # Any whitespace.
     (                  # Start capturing here.
@@ -71,7 +72,9 @@ def readCsvRaw(filename, remove_blank_lines = False, max_lines = 1000000):
 	f = open(filename, 'rt')
 	entries = []
 	for i in range(max_lines):
-		line = f.readline().strip() 
+		line = f.readline().strip()
+		if not line:
+			break
 		if remove_blank_lines and len(line) == 0:
 			continue
 		parts = getCsvLine(line)
@@ -81,6 +84,25 @@ def readCsvRaw(filename, remove_blank_lines = False, max_lines = 1000000):
 	print 'readCsvRaw:', filename, len(entries), len(entries[0])
 	validateMatrix(entries)
 	return entries
+
+
+def readCsvLine(f, remove_blank_lines = True):
+	""" Read a line of data from a .csv file """
+	while True:
+		line = f.readline().strip()
+		if not line:
+			return None
+		if remove_blank_lines and len(line) == 0:
+			continue
+		return getCsvLine(line)
+		
+def readCsvGen(f, remove_blank_lines = True): 
+	""" Generator to Read a CSV file as a list of list of string """
+	while True:
+		data = readCsvLine(f, remove_blank_lines)
+		if not data:
+			break
+		yield data
 
 def readCsvRaw2(filename, has_header, max_lines): 
     """ Read a CSV file into a header and 2d array """
