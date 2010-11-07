@@ -13,6 +13,7 @@ train_file_2 = os.path.join(hearst_dir, 'zip_plus4_data_2.csv')
 train_file_3 = os.path.join(hearst_dir, 'zip_plus4_data_3.csv')
 sales_mo = os.path.join(model_dir, 'sales_mo_dataset.csv')
 store_mo = os.path.join(model_dir, 'store_mo_dataset.csv')
+sales_mo_filtered = os.path.splitext(sales_mo)[0] + '.filtered' + os.path.splitext(sales_mo)[1]
 
 def sample(filename):
     matrix, header = csv.readCsvRaw2(filename, True, 8)
@@ -75,20 +76,23 @@ def getAllStats(filename, keys):
 
     column_index = dict(zip(keys, [header.index(k) for k in keys]))
     stats = dict(zip(keys, [{'lo':sys.maxint, 'hi':-sys.maxint, 'mean': 0} for k in keys]))
-    print 'indexes', column_index
-    print ' stats', stats
+    #print 'indexes', column_index
+    #print ' stats', stats
 
     num_rows = 0
     for row in data:
-        num_rows += 1
         for k in keys:
             val = float(row[column_index[k]])
+            if val < 0.0:
+                print zip(header, row)
+            assert(val >= 0.0)
             s = stats[k]
-            if stats[k]['lo'] < val:
+            if stats[k]['lo'] > val:
                 stats[k]['lo'] = val
-            if stats[k]['hi'] > val:
+            if stats[k]['hi'] < val:
                 stats[k]['hi'] = val
             stats[k]['mean'] += val
+        num_rows += 1
     for k in keys:
         stats[k]['mean'] = stats[k]['mean']/num_rows 
 
@@ -97,6 +101,35 @@ def getAllStats(filename, keys):
         print k, stats[k]
     f.close()
     return stats
+
+def filterBadValues(in_filename, out_filename, keys):
+    print 'filterBadValues', in_filename, out_filename, keys
+    fin = open(in_filename, 'rt')
+    fout = open(out_filename, 'wt')
+    
+    header = csv.readCsvLine(fin)
+    data = csv.readCsvGen(fin)
+    print header
+
+    column_index = dict(zip(keys, [header.index(k) for k in keys]))
+
+    num_rows = 0
+    num_bad = 0
+    for row in data:
+        bad_row = False
+        for k in keys:
+            val = float(row[column_index[k]])
+            if val < 0:
+                bad_row = False
+                num_bad += 1
+        if not bad_row:
+            csv.writeCsvRow(fout, row)
+
+    fin.close()
+    fout.close()
+
+    print in_filename, num_rows, 'rows'
+    print out_filename, num_rows - num_bad, 'rows'
 
 def getStats(filename):
     f = open(filename, 'rt')
@@ -123,6 +156,8 @@ if __name__ == '__main__':
         getStats(store_mo)
     if False:
         getStats(sales_mo)
+        
+    filterBadValues(sales_mo, sales_mo_filtered, ['sales'])
     
     getAllValueCounts(store_mo, ['STATE'])
     getAllValueCounts(sales_mo, ['wholesaler_key'])
