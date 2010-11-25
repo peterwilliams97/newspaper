@@ -13,8 +13,45 @@ import operator
 from bisect import insort
 from bisect import bisect
 
-max_depth = 4
+def distance(a, b):
+    #print 'distance', a, b, '=',
+    dist = math.sqrt(sum([(x[1]-x[0])**2 for x in zip(a,b)]))
+    #print dist
+    return dist
+
+def distanceAxis(a, b, axis):
+    x = axis % len(a)
+    #print 'distanceAxis', a, b, axis, '=',
+    dist = abs(a[x]-b[x])
+    #print dist
+    return dist
+
+
 class Node:
+    def childNearAway(self, point, sign):
+        #print '***', self.location
+        #children = sorted([c for c in (self.left_child, self.right_child) if c], key = lambda c: sign*distance(c.location,point))
+        children = [c for c in (self.left_child, self.right_child) if c]
+        #print 'children', children
+        #print 'children.location', [c.location for c in children]
+        if False:
+            def dist(child):
+                print 'dist', child, 
+                print child.location
+                return sign*distance(child.location,point)
+            children.sort(key = dist)
+        children.sort(key = lambda c: sign*distance(c.location,point))
+        if len(children) == 0:
+            return None
+        else:
+            return children[0]
+        
+    def childNear(self, point):
+        return self.childNearAway(point, +1)
+
+    def childAway(self, point):
+        return self.childNearAway(point, -1)
+
     def addToList(self, tree, leftmost, max_depth, depth, rightness):
         if self.location:
             if rightness < leftmost[0]:
@@ -64,8 +101,11 @@ def kdTree(point_list, depth = 0):
     median = len(point_list) // 2 # choose median
  
     # Create node and construct subtrees
+    location = point_list[median]
+    if not location:
+        return None
     node = Node()
-    node.location = point_list[median]
+    node.location = location
     node.left_child = kdTree(point_list[0:median], depth+1)
     node.right_child = kdTree(point_list[median+1:], depth+1)
     return node
@@ -79,5 +119,39 @@ def test1():
     node = kdTree(point_list)
     node.show()
 
+def kdSearchNN(here, point, best, depth):
+    if not here:
+        return best
+ 
+    if not best:
+        best = here
+
+    # consider the current node
+    if distance(here.location, point) < distance(best.location,point):
+        best = here
+
+    # search the near branch
+    child = here.childNear(point)
+    best = kdSearchNN(child, point, best, depth+1)
+
+    # search the away branch - maybe
+    if distanceAxis(here.location,point, depth) < distance(best.location,point):
+        child = here.childAway(point)
+        best = kdSearchNN(child, point, best, depth+1)
+
+    return best
+
+def test2():
+    point_list = [[i] for i in range(1,32)]
+    node = kdTree(point_list)
+    node.show()
+
+
+    print 'point_list', point_list
+    for point in point_list:
+        best = kdSearchNN(node, point, node, 0)
+        print 'point =', point, ', best =', best.location
+
 if __name__ == '__main__':
-    test1()
+    # test1()
+    test2()
