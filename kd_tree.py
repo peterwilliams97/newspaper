@@ -5,13 +5,7 @@ http://en.wikipedia.org/wiki/Kd-tree
 Peter Williams
 23/11/2010
 """
-
-import re
-import sys
 import math
-import operator
-from bisect import insort
-from bisect import bisect
 
 def distance(a, b):
     #print 'distance', a, b, '=',
@@ -25,7 +19,6 @@ def distanceAxis(a, b, axis):
     dist = abs(a[x]-b[x])
     #print dist
     return dist
-
 
 class Node:
     def childNearAway(self, point, sign):
@@ -45,7 +38,6 @@ class Node:
             return None
         else:
             return children[0]
-        
     def childNear(self, point):
         return self.childNearAway(point, +1)
 
@@ -87,7 +79,6 @@ class Node:
         for depth in sorted(tree.keys()):
             print 'tree[%d]' % depth, tree[depth]
 
-     
 def kdTree(point_list, depth = 0):
     if not point_list:
         return
@@ -110,7 +101,7 @@ def kdTree(point_list, depth = 0):
     node.right_child = kdTree(point_list[median+1:], depth+1)
     return node
 
-def test1():
+def testKdTree():
     point_list = [[i] for i in range(1,32)]
     point_list = [(i, i*2) for i in range(1,8)]
     point_list = [(i, i*2, i*3) for i in range(1,16)]
@@ -119,7 +110,7 @@ def test1():
     node = kdTree(point_list)
     node.show()
 
-def kdSearchNN(here, point, best, depth):
+def _kdSearchNN(here, point, best, depth):
     print '%2d' % depth, '  ' * depth, point, here.location if here else '--', best.location if best else '--'
     if not here:
         return best
@@ -133,29 +124,32 @@ def kdSearchNN(here, point, best, depth):
 
     # search the near branch
     child = here.childNear(point)
-    best = kdSearchNN(child, point, best, depth+1)
+    best = _kdSearchNN(child, point, best, depth+1)
 
     # search the away branch - maybe
     if distanceAxis(here.location,point, depth) < distance(best.location,point):
         print '*',
         child = here.childAway(point)
-        best = kdSearchNN(child, point, best, depth+1)
+        best = _kdSearchNN(child, point, best, depth+1)
 
     return best
+
+def searchKdTree(kd_root):
+    return _kdSearchNN(kd_root, point, kd_root, 0)
 
 def testKdSearchNN():
     n = 2**8
     point_list = [[i,n-i] for i in range(1,n)]
-    node = kdTree(point_list)
-    node.show()
+    kd_root = kdTree(point_list)
+    #kd_root.show()
 
     print 'point_list', point_list
     for point in point_list:
         point2 = [x + .4 for x in point]
         point2 = point
-        best = kdSearchNN(node, point2, node, 0)
+        best = _kdSearchNN(kd_root, point2, kd_root, 0)
         print 'point =', point, 'point2 =', point2, ', best =', best.location, '***' if point != best.location else ''
 
 if __name__ == '__main__':
-    # test1()
+    # testKdTree()
     testKdSearchNN()
