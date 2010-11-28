@@ -1,8 +1,10 @@
-# My first attempt at prediction on a big data set. Uses the [Kaggle](http://bit.ly/Kaggle) Hears Challenge data set
+# My first attempt at prediction on a big data set. 
 
-[http://bit.ly/HearstChallenge](http://bit.ly/HearstChallenge)
+Uses the [Kaggle](http://bit.ly/Kaggle) Hears Challenge data set
 
 Trying to learn from the [Nearest Neighbors homepage](http://simsearch.yury.name/)
+
+Short link: [http://bit.ly/HearstChallenge](http://bit.ly/HearstChallenge)
 
 ## Summary
 
