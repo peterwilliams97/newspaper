@@ -9,7 +9,7 @@ Peter
 import copy, os, time, sys, re
 
 def validateMatrix(matrix):
-	"""Check that all rows in matrix and same length"""
+	""" Check that all rows in matrix and same length"""
 	assert(len(matrix) > 0)
 	assert(len(matrix[0]) > 0)
 	
@@ -20,7 +20,7 @@ def validateMatrix(matrix):
         assert(len(matrix[i]) == len(matrix[0]))
 
 def validateMatrix2(matrix):
-    """Check that all rows in matrix and same length and non-empty"""
+    """ Check that all rows in matrix and same length and non-empty"""
     validateMatrix(matrix)
     for i,row in enumerate(matrix):
         for j,val in enumerate(row):
@@ -63,24 +63,6 @@ def getCsvLine(line):
 		parts = parts[:-1]
 	return parts
 
-def readCsvRaw(filename, remove_blank_lines = False, max_lines = 1000000): 
-	""" Read a CSV file into a 2d array """
-	f = open(filename, 'rt')
-	entries = []
-	for i in range(max_lines):
-		line = f.readline().strip()
-		if not line:
-			break
-		if remove_blank_lines and len(line) == 0:
-			continue
-		parts = getCsvLine(line)
-		print i, parts
-		entries.append(parts)
-	f.close()
-	#print 'readCsvRaw:', filename, len(entries), len(entries[0])
-	validateMatrix(entries)
-	return entries
-
 def readCsvLine(f, remove_blank_lines = True):
 	""" Read a line of data from a .csv file """
 	while True:
@@ -101,41 +83,26 @@ def readCsvGen(f, remove_blank_lines = True):
 			break
 		yield data
 
-def readCsvRaw2(filename, has_header, max_lines): 
-    """ Read a CSV file into a header and 2d array """
-    header = None
-    entries = readCsvRaw(filename, True, max_lines)
-    if has_header:
-        header = entries[0]
-        matrix = entries[1:]
-    else:
-        matrix = entries
-    return (matrix, header)
+def readCsv(filename, has_header = True): 
+	""" Read a CSV file into a 2d array. 1st row is optionally returned in header 1d array """
+	f = open(filename, 'rt')
+	if has_header:
+		header = csv.readCsvLine(f)
+	entries = [row for row in csv.readCsvGen(f)]
+	f.close()
+	return (entries, header)
 
-def readCsvFloat2(filename, has_header): 
-    "Reads a CSV file into a header and 2d array of float"
-    header = None
-    entries = readCsvRaw(filename)
-    if has_header:
-        header = entries[0]
-        matrix = [[float(e) for e in row] for row in entries[1:]]
-        print 'readCsvFloat:', filename, len(entries[1:]), len(entries[1])
-    else:
-        matrix = [[float(e) for e in row] for row in entries]
-    return (matrix, header)    
-
-def readCsvFloat(filename): 
-    "Reads a CSV file into a 2d array of float"
-    matrix, header = readCsvFloat2(filename, False)
-    return matrix
+def readCsvAsDict(filename): 
+	""" Read a CSV file into a dict with keys for each column header the columns as values (lists) """
+	entries, header = readCsv(filename, True)
+	columns = misc.transpose(entries)
+	return dict(zip(header,columns))
+	
 
 def writeCsvRow(f, row):
 	line = ','.join(row).strip()
-	#print len(row), row, line
 	assert(line[-1] != ',')
-	
 	f.write(line + '\n')
-	#f.write(','.join(row) + '\n')
 
 def writeCsv(filename, in_matrix, header = None):
 	"Writes a 2d array to a CSV file"
