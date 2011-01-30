@@ -51,6 +51,51 @@ def get_knn(k, training_data, training_data_class, test_data):
 
     return closest
 
+def get_knn_probability(k, training_data, training_data_class, test_data):
+    """ Use knn to compute probabilities of test_data belonging to training_data_class
+        k: number of nearest neighbors
+        training_data: training training_data instances
+        training_data_class: classes of each training training_data instance
+        test_data: test_data to classify
+        returns: probabilities of each input instance belonging to each class
+    """
+    num_inputs = np.shape(test_data)[0]
+    unique_classes = np.unique(training_data_class)
+    unique_class_to_index = {}
+    for i in range(len(unique_classes)):
+        unique_class_to_index[unique_classes[i]] = i
+    num_classes = len(unique_classes)
+    if False:
+        print 'num_inputs =', num_inputs
+        print 'num_classes =', num_classes
+        print 'training_data_class =', training_data_class
+        print 'unique_classes =', unique_classes
+        print 'unique_class_to_index =', unique_class_to_index
+        exit()
+        print 'training_data =', training_data
+        
+        print 'test_data =', test_data
+    probabilites = np.zeros((num_inputs,num_classes),dtype = 'f')
+
+    for n in range(num_inputs):
+        distances = np.sqrt(np.sum((training_data - test_data[n,:])**2, axis = 1))
+        #print 'i =', test_data[n,:]
+        #print 'd =', distances
+
+        indices = np.argsort(distances, axis = 0)
+        #print 'indices =', indices
+
+        classes = training_data_class[indices[:k]]
+        #print 'classes =', classes
+        class_totals = np.zeros(num_classes)
+        for i in range(classes.shape[0]):
+            class_totals[unique_class_to_index[classes[i]]] += 1
+        #print 'class_totals =', class_totals
+        for i in range(class_totals.shape[0]):
+            probabilites[n,i] = class_totals[i]/classes.shape[0]
+
+    return unique_classes, probabilites
+
 def rand(max_delta):
     """ Return a random number in range [-max_delta..max_delta] """
     return (np.random.random() - 0.5) * max_delta/0.5
@@ -138,6 +183,33 @@ def test_knn_on_sample(title, num_instances, num_classes, num_dimensions, max_de
     
     return True
 
+def test_knn_probability_on_sample(title, num_instances, num_classes, num_dimensions, max_delta):
+    """ Test get_knn_probability() by running it on some synthetic samples
+        title: name of test
+        num_instances: number of training samples
+        num_classes: number of different classes for samples
+        num_dimensions: number of attributes in training_data
+        max_delta: each attribute of each training sample is in range 
+                    [centroid-max_deta,centroid+max_delta]
+        return: True iff all samples are classified correctly
+    """
+    print '#'*40
+    training_data,training_data_class,test_data,test_data_class = make_data(num_instances, num_classes, num_dimensions, max_delta)
+    print '='*40
+    print 'num_instances, num_classes, num_dimensions, max_delta =', num_instances, num_classes, num_dimensions, max_delta
+    k = min(100, num_instances)
+    
+    print '-'*40 + ':', title, num_instances, num_classes, num_dimensions, max_delta 
+    unique_classes, probabilities = get_knn_probability(k, training_data, training_data_class, test_data)
+    print 'k =', k
+    print 'unique_classes =', unique_classes
+    print 'probabilities =', probabilities
+    print 'test_data_class =', test_data_class
+    for i in range(test_data_class.shape[0]):
+        print test_data_class[i], np.argmax(probabilities[i]), probabilities[i]
+
+    return True
+
 def make_pickle_filename(name):
     return 'knn.%s.pkl' % name
 
@@ -217,6 +289,25 @@ def test_knn0():
             print 'mismatch!'
             exit()
 
+def test_knn_probability0():
+    # Need to seed random number generator to give same result for each run
+    np.random.seed(112)
+    title = 'test_knn_probability0'
+    num_instances, num_classes, num_dimensions, max_delta = 35, 5, 3, 0.3
+    num_instances, num_classes, num_dimensions, max_delta = 6, 2, 1, 0.1
+    #num_instances, num_classes, num_dimensions, max_delta = 35, 5, 1, 0.3
+    num_instances, num_classes, num_dimensions, max_delta = 35, 5, 1, 0.4
+    num_instances, num_classes, num_dimensions, max_delta = 350000, 7, 9, 3.0
+    #num_instances, num_classes, num_dimensions, max_delta = 10055, 5, 17, 0.4
+    #num_instances, num_classes, num_dimensions, max_delta = 1090055, 15, 27, 0.49
+    training_data,training_data_class,test_data,test_data_class = make_data(num_instances, num_classes, num_dimensions, max_delta)
+
+    test_knn_probability_on_sample(title, num_instances, num_classes, num_dimensions, max_delta)
+   
+
 if __name__ == '__main__':
-    test_knn()
+    if False:
+        test_knn()
+    if True:
+        test_knn_probability0()
     
