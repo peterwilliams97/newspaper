@@ -7,8 +7,13 @@ Created on 29/01/2011
 
 @author: peter
 """
-import  math, pickle
+USE_KD_TREE = True
+
+import math, pickle
 import numpy as np
+if USE_KD_TREE:
+    from scipy.spatial import KDTree
+
 
 def get_knn(k, training_data, training_data_class, test_data):
     """ Naive implementation of k nearest neighbors
@@ -26,17 +31,29 @@ def get_knn(k, training_data, training_data_class, test_data):
         print 'test_data =', test_data
     closest = np.zeros(num_inputs)
 
+    if USE_KD_TREE:
+        print 'Training kd tree'
+        kd_tree = KDTree(training_data)
+        print 'Done training kd, tree'
+
     for n in range(num_inputs):
-        distances = np.sqrt(np.sum((training_data - test_data[n,:])**2, axis = 1))
+
+        if USE_KD_TREE:
+            distances, indices = kd_tree.query(test_data[n,:], k=k)
+            if k == 1:
+                indices = np.array([indices])
+                distances = np.array([distances])
+        else:
+            distances = np.sqrt(np.sum((training_data - test_data[n,:])**2, axis = 1))
+            indices = np.argsort(distances, axis = 0)
+        #print 'k =', k
         #print 'i =', test_data[n,:]
         #print 'd =', distances
-    
-        indices = np.argsort(distances, axis = 0)
         #print 'indices =', indices
-        
+
         classes = training_data_class[indices[:k]]
         #print 'classes =', classes
-    
+
         classes = np.unique(classes)
         #print 'unique classes =', classes
         if len(classes) == 1:
@@ -76,24 +93,35 @@ def get_knn_probability(k, training_data, training_data_class, test_data):
         
         print 'test_data =', test_data
     probabilites = np.zeros((num_inputs,num_classes),dtype = 'f')
+    
+    if USE_KD_TREE:
+        print 'Training kd tree'
+        kd_tree = KDTree(training_data)
+        print 'Done training kd, tree'
 
     for n in range(num_inputs):
-        distances = np.sqrt(np.sum((training_data - test_data[n,:])**2, axis = 1))
+    
+        if USE_KD_TREE:
+            distances, indices = kd_tree.query(test_data[n,:], k=k)
+        else:
+            distances = np.sqrt(np.sum((training_data - test_data[n,:])**2, axis = 1))
+            indices = np.argsort(distances, axis = 0)
+
         #print 'i =', test_data[n,:]
         #print 'd =', distances
-
-        indices = np.argsort(distances, axis = 0)
         #print 'indices =', indices
 
         classes = training_data_class[indices[:k]]
-        #print 'classes =', classes
+        if False:
+            print 'classes =', classes
+           
         class_totals = np.zeros(num_classes)
         for i in range(classes.shape[0]):
             class_totals[unique_class_to_index[classes[i]]] += 1
         #print 'class_totals =', class_totals
         for i in range(class_totals.shape[0]):
             probabilites[n,i] = class_totals[i]/classes.shape[0]
-
+        
     return unique_classes, probabilites
 
 def rand(max_delta):
@@ -103,7 +131,7 @@ def rand(max_delta):
 def blend(a,b,r):
     """ Blend a and b with ratio r """
     return (r*a + b)/(1.0 + r)
-    
+
 def make_data(num_instances, num_classes, num_dimensions, max_delta):
     """ Make classification test training_data 
         num_instances: number of training samples
@@ -197,7 +225,7 @@ def test_knn_probability_on_sample(title, num_instances, num_classes, num_dimens
     training_data,training_data_class,test_data,test_data_class = make_data(num_instances, num_classes, num_dimensions, max_delta)
     print '='*40
     print 'num_instances, num_classes, num_dimensions, max_delta =', num_instances, num_classes, num_dimensions, max_delta
-    k = min(100, num_instances)
+    k = min(100, num_instances//4)
     
     print '-'*40 + ':', title, num_instances, num_classes, num_dimensions, max_delta 
     unique_classes, probabilities = get_knn_probability(k, training_data, training_data_class, test_data)
@@ -262,7 +290,7 @@ def test_knn():
                 set_pickled('highest_max_delta', highest_max_delta)
         print '*** test:', test_number, ', highest_max_delta:', highest_max_delta 
         test_number += 1
-            
+
 def test_knn0():
     if False:
         training_data = np.array([[1,2,3],[3,1,2],[2,3,1],[4,5,6],[6,4,5],[5,6,4]])
@@ -297,8 +325,8 @@ def test_knn_probability0():
     num_instances, num_classes, num_dimensions, max_delta = 6, 2, 1, 0.1
     #num_instances, num_classes, num_dimensions, max_delta = 35, 5, 1, 0.3
     num_instances, num_classes, num_dimensions, max_delta = 35, 5, 1, 0.4
-    num_instances, num_classes, num_dimensions, max_delta = 350000, 7, 9, 3.0
-    #num_instances, num_classes, num_dimensions, max_delta = 10055, 5, 17, 0.4
+    num_instances, num_classes, num_dimensions, max_delta = 35, 7, 3, 0.3
+    num_instances, num_classes, num_dimensions, max_delta = 10055, 5, 17, 4.8
     #num_instances, num_classes, num_dimensions, max_delta = 1090055, 15, 27, 0.49
     training_data,training_data_class,test_data,test_data_class = make_data(num_instances, num_classes, num_dimensions, max_delta)
 
@@ -306,7 +334,7 @@ def test_knn_probability0():
    
 
 if __name__ == '__main__':
-    if False:
+    if True:
         test_knn()
     if True:
         test_knn_probability0()
