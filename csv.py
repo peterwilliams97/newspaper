@@ -6,7 +6,7 @@ Clean advertisement detection trainging set file
 Peter
 16/05/2010
 """
-import copy, os, time, sys, re
+import copy, os, time, sys, re, misc
 
 def validateMatrix(matrix):
 	""" Check that all rows in matrix and same length"""
@@ -87,8 +87,8 @@ def readCsv(filename, has_header = True):
 	""" Read a CSV file into a 2d array. 1st row is optionally returned in header 1d array """
 	f = open(filename, 'rt')
 	if has_header:
-		header = csv.readCsvLine(f)
-	entries = [row for row in csv.readCsvGen(f)]
+		header = readCsvLine(f)
+	entries = [row for row in readCsvGen(f)]
 	f.close()
 	return (entries, header)
 
@@ -96,10 +96,17 @@ def readCsvAsDict(filename):
 	""" Read a CSV file into a dict with keys for each column header the columns as values (lists) """
 	entries, header = readCsv(filename, True)
 	columns = misc.transpose(entries)
-	return dict(zip(header,columns))
-	
+	return dict(zip(header,columns)), len(entries)
 
 def writeCsvRow(f, row):
+	for s in row:
+		if not isinstance(s, str):
+			print len(row)
+			print type(s)
+			print 'bad type: exiting'
+			exit()
+		assert(isinstance(s, str))
+		
 	line = ','.join(row).strip()
 	assert(line[-1] != ',')
 	f.write(line + '\n')
@@ -113,13 +120,14 @@ def writeCsv(filename, in_matrix, header = None):
 		writeCsvRow(f, row)
 	f.close()
 
-def writeCsvDict(filename, list_dict):
+def writeCsvDict(filename, list_dict, sorted_keys = None):
 	""" Writes a dict of lists where key is header and lists are columns of values """
-	keys = sorted(list_dict.keys())
-	num_rows = len(list_dict[keys[0]])
+	if not sorted_keys:
+		sorted_keys = sorted(list_dict.keys())
+	num_rows = len(list_dict[sorted_keys[0]])
 	matrix = []
 	for i in range(num_rows):
-		 matrix.append([list_dict[k][i] for k in keys])
-	writeCsv(filename, matrix, keys)
+		 matrix.append([list_dict[k][i] for k in sorted_keys])
+	writeCsv(filename, matrix, sorted_keys)
 
   
