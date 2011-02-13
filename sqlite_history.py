@@ -7,6 +7,10 @@ from __future__ import division
 		 	at the time the expense was incurred
 	This is addressed by an a table which records the department to which employees belonged
 	at any given time.
+	
+	Created on 13/02/2011
+
+	@author: peter
 """
 from pysqlite2 import dbapi2 as sqlite
 
@@ -91,8 +95,6 @@ def change_department(cursor, first_name, last_name, department, date):
 				FROM tbl_employee
 				WHERE tbl_employee.first_name=? AND tbl_employee.last_name=?""",
 			(date, department, first_name, last_name))
-		if False:
-			show_history(cursor,0)
 
 def make_test_data(connection, cursor, num_employees, num_departments, num_cycles, num_expenses_per_day):
 	""" Make some test database entries for <num_employees> employees who cycle between
@@ -137,10 +139,6 @@ def make_test_data(connection, cursor, num_employees, num_departments, num_cycle
 					add_expense(cursor, first_name, get_name(employee_num), get_date(department_change_num, (expense_num+1)/(num_expenses_per_day+2)), 
 								get_cost(employee_num, department_num), get_description(employee_num,department_num,department_change_num))
 			department_change_num += 1
-
-def get_header(table):
-	cursor.execute("PRAGMA table_info(%s)" % table)
-	return [str(x[1]) for x in cursor.fetchall()]
 
 def show_expenses_with_dates(cursor):
 	column_headers = get_header('tbl_expense') + get_header('tbl_employee') + get_header('tbl_history')
