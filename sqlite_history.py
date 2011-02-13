@@ -177,9 +177,7 @@ def show_expenses_by_department(cursor):
 
 def show_employees(cursor):
 	""" Show all the employees """ 
-	column_headers = get_header('tbl_history')
 	cursor.execute("SELECT * FROM tbl_employee ORDER BY last_name, first_name")
-
 	employees = cursor.fetchall()
 	print 'Employees:', '-' * 30 
 	for i,e in enumerate(employees):
