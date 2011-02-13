@@ -1,11 +1,11 @@
 from __future__ import division
 """
-	Simple sql running on sqlite to demonstrate the department history problem which is
+	Simple sql running on sqlite to demonstrate the 'department history' problem which is
 		- expenses are incurred by employees
 		- employees can change departments
 		- expenses need to be charged against the department the employee belonged to 
 		 	at the time the expense was incurred
-	This is addressed by an a table which records the department to which employees belonged
+	This is addressed by a table which records the department to which employees belonged
 	at any given time.
 	
 	Created on 13/02/2011
